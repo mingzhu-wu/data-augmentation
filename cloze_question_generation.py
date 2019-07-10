@@ -4,6 +4,7 @@ import data_augmentation
 import multiprocessing
 import json
 import sys
+import os
 import gzip
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 from termcolor import colored
@@ -63,20 +64,13 @@ def process_context(context, id):
 
 
 if __name__ == '__main__':
+    path = sys.argv[1]
+    for file in os.listdir(path):
+        with open(path+'/'+file, 'r') as f_context:
+            for line in f_context:
+                context = json.loads(line)["context"]
+                process_context(context, json.loads(line)["id"])
 
-    res = []
-    pool = multiprocessing.Pool(processes=data_augmentation.ALLOWED_PARALLEL_PROCESS)
-    context_index = 0
-    with gzip.open(sys.argv[1], 'rt') as f_src:
-        next(f_src)
-        for line in f_src:
-            example = json.loads(line)
-            context_index += 1
-            process_context(example['context'], context_index)
-            #pool.apply_async(process_context, (example['context'], ))
-
-        #pool.close()
-        #pool.join()
 
 
 

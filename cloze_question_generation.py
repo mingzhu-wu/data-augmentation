@@ -1,4 +1,3 @@
-import spacy
 import nltk
 from allennlp.predictors.predictor import Predictor
 import data_augmentation
@@ -10,8 +9,6 @@ from nltk.tokenize.treebank import TreebankWordDetokenizer
 from termcolor import colored
 
 predictor = Predictor.from_path("https://s3-us-west-2.amazonaws.com/allennlp/models/elmo-constituency-parser-2018.03.14.tar.gz")
-answer_categories = {"GPE": "PLACE", "LOC": "PLACE", "FAC": "PLACE", }
-
 
 # High Level Answer Category
 def get_mask(label):
@@ -61,7 +58,7 @@ def process_context(context, id):
     cloze_qas_context = []
     for sent in ss:
         cloze_qas_context.extend(generate_qa_pairs(sent))
-    with open("context_"+str(id)+".txt", 'w') as f_cloze:
+    with open("cloze/context_"+str(id)+".txt", 'w') as f_cloze:
         json.dump({"id":id, "context": context, "cloze_qas": cloze_qas_context}, f_cloze, indent=4, ensure_ascii=False)
 
 
@@ -76,7 +73,6 @@ if __name__ == '__main__':
             example = json.loads(line)
             context_index += 1
             process_context(example['context'], context_index)
-            break
             #pool.apply_async(process_context, (example['context'], ))
 
         #pool.close()

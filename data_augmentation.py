@@ -120,25 +120,21 @@ def process_example(example_dict, doc_index):
 
 if __name__ == '__main__':
     src_path = sys.argv[1]
-    data = [json.loads(line) for line in gzip.open(src_path, 'rt')]
     res = []
     pool = multiprocessing.Pool(processes=ALLOWED_PARALLEL_PROCESS)
     doc_index = 0
-    print(len(data))
-    with gzip.open(src_path, 'rt') as f_src:
-        next(f_src)
+    with gzip.open(src_path, 'rt') as f_src, open(src_path+"_arg", 'w') as f_out:
+        json.dump(next(f_out))
         for line in f_src:
             example = json.loads(line)
-    #for example in data[1:]:
             res.append(process_example(example, doc_index))
             #res.append(pool.apply_async(process_example, (example, doc_index, )))
             doc_index += 1
         # pool.close()
         # pool.join()
-    print("the end!")
+   # print("the end!")
 
-    with gzip.open(src_path+'_aug', 'wt') as f_out:
-        json.dump(data[0], f_out)
+#    with gzip.open(src_path+'_aug', 'wt') as f_out:
         f_out.write("\n")
         for new_example in res:
             json.dump(new_example, f_out)

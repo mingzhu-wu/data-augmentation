@@ -5,7 +5,6 @@ import gzip
 import json
 
 
-
 def extract_cloze_questions(path, out_path):
     with open(out_path, 'w') as f_out:
         for file in os.listdir(path):
@@ -18,7 +17,7 @@ def extract_cloze_questions(path, out_path):
 
 
 def extract_natural_questions(src, target):
-    with gzip.open(path, 'rt') as f_src, open(target, 'w') as f_out:
+    with gzip.open(src, 'rt') as f_src, open(target, 'w') as f_out:
         next(f_src)
         for line in f_src:
             for qa in json.loads(line)["qas"]:

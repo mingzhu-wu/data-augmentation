@@ -9,7 +9,8 @@ import gzip
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 from termcolor import colored
 
-predictor = Predictor.from_path("https://s3-us-west-2.amazonaws.com/allennlp/models/elmo-constituency-parser-2018.03.14.tar.gz")
+predictor = Predictor.from_path("elmo-constituency-parser-2018.03.14.tar.gz")
+
 
 # High Level Answer Category
 def get_mask(label):
@@ -59,7 +60,7 @@ def process_context(context, id):
     cloze_qas_context = []
     for sent in ss:
         cloze_qas_context.extend(generate_qa_pairs(sent))
-    with open("cloze/context_"+str(id)+".txt", 'w') as f_cloze:
+    with open("cloze/context_cloze"+str(id)+".txt", 'w') as f_cloze:
         json.dump({"id":id, "context": context, "cloze_qas": cloze_qas_context}, f_cloze, indent=4, ensure_ascii=False)
 
 

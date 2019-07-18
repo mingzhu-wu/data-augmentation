@@ -15,16 +15,17 @@ def analyse_one_example(example, index):
 
     context = example["context"]
     ner_context = data_augmentation.get_ner_spacy_stanford(context)
+    ner_context_lowercase = {k.lower(): v for k, v in ner_context.items()}
     for qa in example["qas"]:
         for answer in qa["answers"]:
             number_of_answers += 1
             len_ans_dict.setdefault(len(answer.split()), 0)
             len_ans_dict[len(answer.split())] += 1
-            if answer.startswith("The "):
-                answer = answer.replace("The ", "the ")
-            if answer in ner_context.keys():
-                ner_type_count.setdefault(ner_context[answer], 0)
-                ner_type_count[ner_context[answer]] += 1
+            # if answer.startswith("The "):
+            #    answer = answer.replace("The ", "the ")
+            if answer.lower() in ner_context_lowercase.keys():
+                ner_type_count.setdefault(ner_context_lowercase[answer.lower()], 0)
+                ner_type_count[ner_context_lowercase[answer.lower()]] += 1
             else:
                 number_of_answer_not_ne += 1
                 #none_ne_answer.append(answer)
@@ -42,7 +43,6 @@ res = []
 
 pool = multiprocessing.Pool(processes=data_augmentation.ALLOWED_PARALLEL_PROCESS)
 with gzip.open(sys.argv[1], 'rt') as f_src:
-#with open(sys.argv[1], 'r') as f_src:
     data = [json.loads(line) for line in f_src]
     print(len(data))
     for example in data[1:]:

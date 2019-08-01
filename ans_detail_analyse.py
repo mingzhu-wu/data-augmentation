@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     with open(sys.argv[2], 'w') as f_out:
         json.dump(output_dict, f_out, indent=4)
-
+    print("The end!")
 
 
 

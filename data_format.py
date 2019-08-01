@@ -1,6 +1,7 @@
 import json
 import sys
 from spacy.lang.en import English
+import uuid
 
 nlp = English()
 tokenizer = nlp.Defaults.create_tokenizer(nlp)
@@ -36,6 +37,7 @@ def get_formulated_qas(qas_list, context):
     new_qas = []
     new_qa = {}
     for qa in qas_list:
+        new_qa["id"] = uuid.uuid1().hex
         new_qa["qid"] = qa["id"]
         new_qa["question"] = qa["question"]
         new_qa["question_tokens"] = get_context_tokens(qa["question"])
@@ -49,13 +51,14 @@ def get_formulated_qas(qas_list, context):
 def data_format(file, out_file):
     new_format = {}
     with open(file, 'r') as f_src, open(out_file, 'w') as f_out:
-        json.dump({"header": {"dataset": "augmented", "split": "dev"}}, f_out)
+        json.dump({"header": {"dataset": "SQuAD", "split": "train"}}, f_out)
         f_out.write("\n")
         content = json.load(f_src)
         print(len(content), type(content))
         for example in content["data"]:
             for paraph in example["paragraphs"]:
                 try:
+                    new_format["id"] = ""
                     new_format["context"] = paraph["context"]
                     new_format["context_tokens"] = get_context_tokens(paraph["context"])
                     new_format["qas"] = get_formulated_qas(paraph["qas"], paraph["context"])

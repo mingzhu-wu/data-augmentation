@@ -11,8 +11,12 @@ UKP_SERVER_NED = "http://ned.ukp.informatik.tu-darmstadt.de"
 
 
 def analyse_none_ne_answer(answer):
-    ans_tree = nltk.tree.ParentedTree.fromstring(StanfordCoreNLP(UKP_SERVER_NED, 9000).parse(answer))
-    ans_type = ans_tree[0].label()
+    try:
+        ans_tree = nltk.tree.ParentedTree.fromstring(StanfordCoreNLP(UKP_SERVER_NED, 9000).parse(answer))
+        ans_type = ans_tree[0].label()
+    except BaseException as e:
+        print(e)
+        ans_type = ""
     return ans_type
 
 

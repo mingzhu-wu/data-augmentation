@@ -6,11 +6,33 @@ from termcolor import colored
 import multiprocessing
 import nltk
 from stanfordcorenlp import StanfordCoreNLP
+import pandas
+import string
+import re
 
 UKP_SERVER_NED = "http://ned.ukp.informatik.tu-darmstadt.de"
 
 
-def analyse_none_ne_answer(answer):
+# code from mrqa_official_eval
+def normalize_answer(s):
+    """Lower text and remove punctuation, articles and extra whitespace."""
+    def remove_articles(text):
+        return re.sub(r'\b(a|an|the)\b', ' ', text)
+
+    def white_space_fix(text):
+        return ' '.join(text.split())
+
+    def remove_punc(text):
+        exclude = set(string.punctuation)
+        return ''.join(ch for ch in text if ch not in exclude)
+
+    def lower(text):
+        return text.lower()
+
+    return white_space_fix(remove_articles(remove_punc(lower(s))))
+
+
+def analyse_non_ne_answer(answer):
     try:
         ans_tree = nltk.tree.ParentedTree.fromstring(StanfordCoreNLP(UKP_SERVER_NED, 9000).parse(answer))
         ans_type = ans_tree[0].label()
@@ -29,21 +51,20 @@ def analyse_one_example(example, index):
 
     context = example["context"]
     ner_context = data_augmentation.get_ner_spacy_stanford(context)
-    ner_context_lowercase = {k.lower(): v for k, v in ner_context.items()}
+    # ner_context_lowercase = {k.lower(): v for k, v in ner_context.items()}
+    ner_context_normalize = {normalize_answer(k): v for k, v in ner_context.items()}
     for qa in example["qas"]:
+        number_of_answers += 1
         for answer in qa["answers"]:
-            number_of_answers += 1
             len_ans_dict.setdefault(len(answer.split()), 0)
             len_ans_dict[len(answer.split())] += 1
-            # if answer.startswith("The "):
-            #    answer = answer.replace("The ", "the ")
 
-            if answer.lower() in ner_context_lowercase.keys():
-                ner_type_count.setdefault(ner_context_lowercase[answer.lower()], 0)
-                ner_type_count[ner_context_lowercase[answer.lower()]] += 1
+            if normalize_answer(answer) in ner_context_normalize.keys():
+                ner_type_count.setdefault(ner_context_normalize[normalize_answer(answer)], 0)
+                ner_type_count[ner_context_normalize[normalize_answer(answer)]] += 1
             else:
                 number_of_answer_not_ne += 1
-                ans_type = analyse_none_ne_answer(answer).lower()
+                ans_type = analyse_non_ne_answer(answer).lower()
                 ner_type_count["None-NER"].setdefault(ans_type, 0)
                 ner_type_count["None-NER"][ans_type] += 1
 
@@ -88,16 +109,28 @@ if __name__ == '__main__':
     print("number of all answers and non named entity answers", sum_number_of_answers, sum_number_of_answer_not_ne)
     print("Ratio of non-named entities in answer: %.2f%%" % (round(sum_number_of_answer_not_ne/sum_number_of_answers, 3)*100))
 
-    separate_ratio = {k: round(v/sum_number_of_answers, 3) for k, v in sum_type_count.items()}
-    [print("Ratio of "+k+" in answers is: %.2f%%" % (v*100)) for k, v in sorted(separate_ratio.items(), \
-                                                               key=lambda d: d[1], reverse=True)]
+    separate_ratio = {k: round(v/sum_number_of_answers *100, 2) for k, v in sorted(sum_type_count.items(), key=lambda d:d[0])}
+    separate_ratio["non-named entity"] = round(sum_number_of_answer_not_ne/sum_number_of_answers, 3)*100
+    separate_ratio["Total Number of answers"] = sum_number_of_answers
+    # [print("Ratio of "+k+" in answers is: %.2f%%" % (v*100)) for k, v in sorted(separate_ratio.items(), \
+    #                                                          key=lambda d: d[1], reverse=True)]
+    path = sys.argv[2]+".xlsx"
+    writer = pandas.ExcelWriter(path, engine='xlsxwriter')
 
-    separate_ratio1 = {k1: round(v1/sum_number_of_answers, 3) for k1, v1 in sum_type_count_none_ne.items()}
-    [print("Ratio of "+k1+" in answers is: %.2f%%" % (v1*100)) for k1, v1 in sorted(separate_ratio1.items(), \
-                                                                    key=lambda d: d[1], reverse=True)]
+    pandas.Series(separate_ratio).to_frame(sys.argv[2]).to_excel(writer, sheet_name="NE answers")
 
-    len_ratio = {l: round(c/sum_number_of_answers, 3) for l, c in sum_len_answer.items()}
-    [print("number of answers with length "+str(k)+" is:  %.2f%%" % (v*100)) for k, v in len_ratio.items()]
+    separate_ratio1 = {k1: round(v1/sum_number_of_answers *100, 2) for k1, v1 in sorted(sum_type_count_none_ne.items(), key=lambda d:d[0])}
+    # [print("Ratio of "+k1+" in answers is: %.2f%%" % (v1*100)) for k1, v1 in sorted(separate_ratio1.items(), \
+    #                                                               key=lambda d: d[1], reverse=True)]
+
+    pandas.Series(separate_ratio1).to_frame(sys.argv[2]).to_excel(writer, sheet_name="non-NE answers")
+
+    len_ratio = {l: round(c/sum_number_of_answers *100, 2) for l, c in sorted(sum_len_answer.items(), key=lambda d:d[0])}
+    #[print("number of answers with length "+str(k)+" is:  %.2f%%" % (v*100)) for k, v in len_ratio.items()]
+    #
+    pandas.Series(len_ratio).to_frame(sys.argv[2]).to_excel(writer, sheet_name="length")
+    writer.save()
+    writer.close()
 
 
 

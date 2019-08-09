@@ -45,7 +45,7 @@ def analyse_non_ne_answer(answer):
 def analyse_one_example(example, index):
     print(colored(("example " + str(index)), 'yellow'))
     number_of_answers = 0
-    ner_type_count = {"None-NER": {}}
+    ner_type_count = {"Non-NER": {}}
     number_of_answer_not_ne = 0
     len_ans_dict = {}
 
@@ -55,18 +55,23 @@ def analyse_one_example(example, index):
     ner_context_normalize = {normalize_answer(k): v for k, v in ner_context.items()}
     for qa in example["qas"]:
         number_of_answers += 1
-        for answer in qa["answers"]:
-            len_ans_dict.setdefault(len(answer.split()), 0)
-            len_ans_dict[len(answer.split())] += 1
+        len_ans = 0
 
-            if normalize_answer(answer) in ner_context_normalize.keys():
-                ner_type_count.setdefault(ner_context_normalize[normalize_answer(answer)], 0)
-                ner_type_count[ner_context_normalize[normalize_answer(answer)]] += 1
-            else:
-                number_of_answer_not_ne += 1
-                ans_type = analyse_non_ne_answer(answer).lower()
-                ner_type_count["None-NER"].setdefault(ans_type, 0)
-                ner_type_count["None-NER"][ans_type] += 1
+        if not any(normalize_answer(ans) in ner_context_normalize.keys() for ans in qa["answers"]):
+            number_of_answer_not_ne += 1
+            ans_type = analyse_non_ne_answer(normalize_answer(qa["answers"][0]))
+            ner_type_count["Non-NER"].setdefault(ans_type, 0)
+            ner_type_count["Non-NER"][ans_type] += 1
+            len_ans += len(qa["answers"][0].split())
+        else:
+            for answer in qa["answers"]:
+                if normalize_answer(answer) in ner_context_normalize.keys():
+                    len_ans += len(answer.split())
+                    ner_type_count.setdefault(ner_context_normalize[normalize_answer(answer)], 0)
+                    ner_type_count[ner_context_normalize[normalize_answer(answer)]] += 1
+                    break
+        len_ans_dict.setdefault(len_ans, 0)
+        len_ans_dict[len_ans] += 1
 
     return number_of_answers, ner_type_count, number_of_answer_not_ne, len_ans_dict
 
@@ -98,7 +103,7 @@ if __name__ == '__main__':
             sum_len_answer.setdefault(len, 0)
             sum_len_answer[len] += c
         for k, v in type_count.items():
-            if k != "None-NER":
+            if k != "Non-NER":
                 sum_type_count.setdefault(k, 0)
                 sum_type_count[k] += v
             else:
@@ -114,21 +119,21 @@ if __name__ == '__main__':
     separate_ratio["Total Number of answers"] = sum_number_of_answers
     # [print("Ratio of "+k+" in answers is: %.2f%%" % (v*100)) for k, v in sorted(separate_ratio.items(), \
     #                                                          key=lambda d: d[1], reverse=True)]
-    path = sys.argv[2]+".xlsx"
-    writer = pandas.ExcelWriter(path, engine='xlsxwriter')
+    data_name = sys.argv[2]
+    writer = pandas.ExcelWriter(data_name+".xlsx", engine='xlsxwriter')
 
-    pandas.Series(separate_ratio).to_frame(sys.argv[2]).to_excel(writer, sheet_name="NE answers")
+    pandas.Series(separate_ratio).to_frame(data_name).to_excel(writer, sheet_name="NE answers")
 
     separate_ratio1 = {k1: round(v1/sum_number_of_answers *100, 2) for k1, v1 in sorted(sum_type_count_none_ne.items(), key=lambda d:d[0])}
     # [print("Ratio of "+k1+" in answers is: %.2f%%" % (v1*100)) for k1, v1 in sorted(separate_ratio1.items(), \
     #                                                               key=lambda d: d[1], reverse=True)]
 
-    pandas.Series(separate_ratio1).to_frame(sys.argv[2]).to_excel(writer, sheet_name="non-NE answers")
+    pandas.Series(separate_ratio1).to_frame(data_name).to_excel(writer, sheet_name="non-NE answers")
 
     len_ratio = {l: round(c/sum_number_of_answers *100, 2) for l, c in sorted(sum_len_answer.items(), key=lambda d:d[0])}
     #[print("number of answers with length "+str(k)+" is:  %.2f%%" % (v*100)) for k, v in len_ratio.items()]
     #
-    pandas.Series(len_ratio).to_frame(sys.argv[2]).to_excel(writer, sheet_name="length")
+    pandas.Series(len_ratio).to_frame(data_name).to_excel(writer, sheet_name="length")
     writer.save()
     writer.close()
 

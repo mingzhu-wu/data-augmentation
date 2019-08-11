@@ -29,8 +29,8 @@ if __name__ == "__main__":
         context = row[-1]
         ner_context = data_augmentation.get_ner_spacy_stanford(context)
         ner_context_normalize = {ne_in_answer.normalize_answer(k): v for k, v in ner_context.items()}
-        pred_type, pred_flag = get_ans_type(ne_in_answer.normalize_answer(predict), ner_context_normalize)
-        gold_type, gold_flag = get_ans_type(ne_in_answer.normalize_answer(gold), ner_context_normalize)
+        pred_type, pred_flag = get_ans_type(ne_in_answer.normalize_answer(str(predict)), ner_context_normalize)
+        gold_type, gold_flag = get_ans_type(ne_in_answer.normalize_answer(str(gold)), ner_context_normalize)
         new_row = row.tolist()[1:]
         new_row.insert(3, pred_flag)
         new_row.insert(4, pred_type)

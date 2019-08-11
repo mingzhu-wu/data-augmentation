@@ -95,6 +95,7 @@ def get_ner_spacy_stanford(context):
         sta_ner_token_list = get_ner_doc(context)
     except BaseException as e:
         print("context is too long to get stanford named entities")
+        sta_ner_token_list = []
 
     sta_ner_list = get_merged_ner(sta_ner_token_list)
     write_ner_coren(sta_ner_list, ner_dict)

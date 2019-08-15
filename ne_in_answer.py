@@ -37,8 +37,9 @@ def analyse_non_ne_answer(answer):
         ans_tree = nltk.tree.ParentedTree.fromstring(StanfordCoreNLP(UKP_SERVER_NED, 9000).parse(answer))
         ans_type = ans_tree[0].label()
     except BaseException as e:
+        #raise e
         print(e)
-        ans_type = ""
+        ans_type = "undefined"
     return ans_type
 
 

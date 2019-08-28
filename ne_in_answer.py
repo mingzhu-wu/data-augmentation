@@ -1,14 +1,12 @@
 import gzip
 import sys
 import json
-import data_augmentation
 from termcolor import colored
 import multiprocessing
-import nltk
-from stanfordcorenlp import StanfordCoreNLP
 import pandas
 import string
 import re
+import text_analyse
 
 UKP_SERVER_NED = "http://ned.ukp.informatik.tu-darmstadt.de"
 
@@ -32,18 +30,7 @@ def normalize_answer(s):
     return white_space_fix(remove_articles(remove_punc(lower(s))))
 
 
-def analyse_non_ne_answer(answer):
-    try:
-        ans_tree = nltk.tree.ParentedTree.fromstring(StanfordCoreNLP(UKP_SERVER_NED, 9000).parse(answer))
-        ans_type = ans_tree[0].label()
-    except BaseException as e:
-        #raise e
-        print(e)
-        ans_type = "undefined"
-    return ans_type
-
-
-def analyse_one_example(example, index):
+def analyse_answer_type(example, index):
     print(colored(("example " + str(index)), 'yellow'))
     number_of_answers = 0
     ner_type_count = {"Non-NER": {}}
@@ -51,7 +38,7 @@ def analyse_one_example(example, index):
     len_ans_dict = {}
 
     context = example["context"]
-    ner_context = data_augmentation.get_ner_spacy_stanford(context)
+    ner_context = text_analyse.get_ner_spacy_stanford(context)
     # ner_context_lowercase = {k.lower(): v for k, v in ner_context.items()}
     ner_context_normalize = {normalize_answer(k): v for k, v in ner_context.items()}
     for qa in example["qas"]:
@@ -60,7 +47,7 @@ def analyse_one_example(example, index):
 
         if not any(normalize_answer(ans) in ner_context_normalize.keys() for ans in qa["answers"]):
             number_of_answer_not_ne += 1
-            ans_type = analyse_non_ne_answer(normalize_answer(qa["answers"][0]))
+            ans_type = text_analyse.analyse_non_ne_answer(normalize_answer(qa["answers"][0]))
             ner_type_count["Non-NER"].setdefault(ans_type, 0)
             ner_type_count["Non-NER"][ans_type] += 1
             len_ans += len(qa["answers"][0].split())
@@ -86,13 +73,13 @@ if __name__ == '__main__':
     none_ne_answers = []
     i = 0
     res = []
-    pool = multiprocessing.Pool(processes=data_augmentation.ALLOWED_PARALLEL_PROCESS)
+    pool = multiprocessing.Pool(processes=text_analyse.ALLOWED_PARALLEL_PROCESS)
     with gzip.open(sys.argv[1], 'rt') as f_src:
         data = [json.loads(line) for line in f_src]
         print(len(data))
         for example in data[1:]:
             i += 1
-            res.append(pool.apply_async(analyse_one_example, (example, i, )))
+            res.append(pool.apply_async(analyse_answer_type, (example, i,)))
         pool.close()
         pool.join()
 

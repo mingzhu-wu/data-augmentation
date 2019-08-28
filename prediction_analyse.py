@@ -1,8 +1,7 @@
 import sys
 import pandas
-import numpy
-import data_augmentation
 import ne_in_answer
+import text_analyse
 
 
 def get_ans_type(ans, ne_in_context):
@@ -11,7 +10,7 @@ def get_ans_type(ans, ne_in_context):
         ans_type = ne_in_context.get(ans)
         is_named_entity = True
     else:
-        ans_type = ne_in_answer.analyse_non_ne_answer(ans).lower()
+        ans_type = text_analyse.analyse_non_ne_answer(ans).lower()
     return ans_type, is_named_entity
 
 
@@ -27,7 +26,7 @@ if __name__ == "__main__":
         predict = row[3]
         gold = row[4].split(";")
         context = row[-1]
-        ner_context = data_augmentation.get_ner_spacy_stanford(context)
+        ner_context = text_analyse.get_ner_spacy_stanford(context)
         ner_context_normalize = {ne_in_answer.normalize_answer(k): v for k, v in ner_context.items()}
         pred_type, pred_flag = get_ans_type(ne_in_answer.normalize_answer(str(predict)), ner_context_normalize)
         gold_type, gold_flag = get_ans_type(ne_in_answer.normalize_answer(str(gold[0])), ner_context_normalize)

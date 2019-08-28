@@ -1,17 +1,16 @@
 import gzip
 import sys
 import json
-import data_augmentation
 from termcolor import colored
 import multiprocessing
-import ne_in_answer
+import text_analyse
 
 
 def analyse_one_example(example, index):
     print(colored(("example " + str(index)), 'yellow'))
     context = example["context"]
     tag_qid = {}
-    ner_context = data_augmentation.get_ner_spacy_stanford(context)
+    ner_context = text_analyse.get_ner_spacy_stanford(context)
     ner_context_lowercase = {k.lower(): v for k, v in ner_context.items()}
 
     for qa in example["qas"]:
@@ -19,7 +18,7 @@ def analyse_one_example(example, index):
             if answer.lower() in ner_context_lowercase.keys():
                 tag = ner_context_lowercase[answer.lower()]
             else:
-                tag = ne_in_answer.analyse_none_ne_answer(answer).lower()
+                tag = text_analyse.analyse_none_ne_answer(answer).lower()
             tag_qid.setdefault(tag, [])
             tag_qid[tag].append((qa["qid"], answer))
 
@@ -27,7 +26,7 @@ def analyse_one_example(example, index):
 
 
 if __name__ == '__main__':
-    pool = multiprocessing.Pool(processes=data_augmentation.ALLOWED_PARALLEL_PROCESS)
+    pool = multiprocessing.Pool(processes=text_analyse.ALLOWED_PARALLEL_PROCESS)
     i = 0
     res = []
     output_dict = {}

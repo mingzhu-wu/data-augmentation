@@ -1,6 +1,6 @@
 import nltk
 from allennlp.predictors.predictor import Predictor
-import data_augmentation
+import text_analyse
 import multiprocessing
 import json
 import sys
@@ -41,7 +41,7 @@ def find_clause_contain_ne(tree, ne):
 
 def generate_qa_pairs(sentence):
     cloze_qas = []
-    ne_list = data_augmentation.spacy_ents(sentence)
+    ne_list = text_analyse.spacy_ents(sentence)
     # if no named entity found in this sentence, just return
     if not ne_list:
         return []

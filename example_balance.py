@@ -125,9 +125,10 @@ def generate_random_set(name, total_examples, balanced_examples, folder):
         for line in lines:
             example = json.loads(line.strip())
             qas = copy.deepcopy(example['qas'])
+
             # a list of dict, qa is a dict, the latter is a list
             for qa in example["qas"]:
-                if random.randint(0, total_examples) <= balanced_examples:
+                if random.randint(0, total_examples) <= balanced_examples and deleted_number < balanced_examples:
                     qas.remove(qa)
                     deleted_number += 1
 
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     for set_name, total in datasets.items():
         set_dis = get_distribute_per_dataset(ds, set_name)
         number_reduced = sum(set_dis.values())
-        generate_balance_set(set_name, set_dis, "balanced")
+        #generate_balance_set(set_name, set_dis, "balanced")
         generate_random_set(set_name, total, number_reduced, "random")
 
 

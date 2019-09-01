@@ -18,7 +18,7 @@ def get_statistics():
         row = list(row)
         # exlcude fload nan values
         if row[0] == row[0]:
-            dd[row[0]] = {"SQuAD": row[1:4], "Hotpot": row[4:7], "NewsQA": row[7:10], "TriviaQA": row[10:13], \
+            dd[row[0]] = {"SQuAD": row[1:4], "HotpotQA": row[4:7], "NewsQA": row[7:10], "TriviaQA": row[10:13], \
                           "SearchQA": row[13:16], "NaturalQuestions": row[16:19]}
     return dd
 
@@ -88,8 +88,10 @@ def get_question_type(question="", question_tokens=[]):
     return qs_type
 
 
-def generate_new_set(name, distri, postfix):
-    with gzip.open(name + ".jsonl.gz", 'rt') as f_in, gzip.open(name + postfix + ".jsonl.gz", "wt") as f_out:
+def generate_balance_set(name, distri, folder):
+    print(folder, name)
+    with gzip.open("data_train/" + name + ".jsonl.gz", 'rt') as f_in, \
+            gzip.open("data_train/"+folder + "/" + name + ".jsonl.gz", "wt") as f_out:
         f_out.write(next(f_in)) # header
         lines = f_in.readlines()
         random.shuffle(lines)
@@ -112,6 +114,30 @@ def generate_new_set(name, distri, postfix):
                 f_out.write(json.dumps(example) + "\n")
 
 
+def generate_random_set(name, total_examples, balanced_examples, folder):
+    print(folder, name)
+    deleted_number = 0
+    with gzip.open("data_train/"+ name + ".jsonl.gz", 'rt') as f_in, \
+            gzip.open("data_train/" + folder + "/" + name + ".jsonl.gz", "wt") as f_out:
+        f_out.write(next(f_in)) # header
+        lines = f_in.readlines()
+        random.shuffle(lines)
+        for line in lines:
+            example = json.loads(line.strip())
+            qas = copy.deepcopy(example['qas'])
+            # a list of dict, qa is a dict, the latter is a list
+            for qa in example["qas"]:
+                if random.randint(0, total_examples) <= balanced_examples:
+                    qas.remove(qa)
+                    deleted_number += 1
+
+            # if not all the questions in this example are deleted
+            if qas:
+                example['qas'] = qas
+                f_out.write(json.dumps(example) + "\n")
+        print(deleted_number, balanced_examples)
+
+
 if __name__ == '__main__':
     ds = get_statistics()
     output = {}
@@ -129,10 +155,12 @@ if __name__ == '__main__':
     new_df.to_csv("output.csv", sep="\t")
 
     print(ds)
-    datasets = ["SQuAD", "HotpotQA", "NewsQA", "TriviaQA", "SearchQA", "NaturalQuestions"]
-    for set_name in datasets:
+    datasets = {"SQuAD": 86588, "HotpotQA": 72928, "NewsQA": 74160, "TriviaQA": 61688, "SearchQA": 117384, "NaturalQuestions": 104071}
+    for set_name, total in datasets.items():
         set_dis = get_distribute_per_dataset(ds, set_name)
-        generate_new_set(set_name, set_dis, "_balanced")
+        number_reduced = sum(set_dis.values())
+        generate_balance_set(set_name, set_dis, "balanced")
+        generate_random_set(set_name, total, number_reduced, "random")
 
 
 

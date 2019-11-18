@@ -1,3 +1,6 @@
+"""
+Generate cloze style questions from existing mrqa datasets.
+"""
 import nltk
 from allennlp.predictors.predictor import Predictor
 import text_analyse

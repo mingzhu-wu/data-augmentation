@@ -18,7 +18,7 @@ def analyse_one_example(example, index):
             if answer.lower() in ner_context_lowercase.keys():
                 tag = ner_context_lowercase[answer.lower()]
             else:
-                tag = text_analyse.analyse_none_ne_answer(answer).lower()
+                tag = text_analyse.analyse_non_ne_answer(answer).lower()
             tag_qid.setdefault(tag, [])
             tag_qid[tag].append((qa["qid"], answer))
 

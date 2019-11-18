@@ -1,3 +1,8 @@
+"""
+This script is used to format unsupervised qa dataset published by
+https://github.com/facebookresearch/UnsupervisedQA?fbclid=IwAR0atDkusuT6Rc2-d1QAblETUAB7_rc7Ws3-x7quc4LpphcEeOT-XOZwaL0
+to MRQA compatible qa dataset for augmented training
+"""
 import json
 import sys
 from spacy.lang.en import English

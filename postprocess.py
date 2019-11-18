@@ -33,9 +33,12 @@ def process_gold_length(df):
 def process_question_type(df):
     q_counter = {}
     questions = df["question"].tolist()
+    print(len(df))
     f1 = df["f_score"].tolist()
     for i in range(0, len(df)):
         q_type = text_analyse.get_question_type(questions[i])
+        if q_type == "what":
+            print(f"{questions[i]}")
         q_counter.setdefault(q_type, {})
         q_counter[q_type]["total"] = q_counter[q_type].get("total", 0) + 1
         q_counter[q_type]["F1"] = q_counter[q_type].get("F1", 0) + f1[i]
@@ -64,22 +67,24 @@ if __name__ == "__main__":
     len_table = {}
     question_table = {}
     i = 0
-    for dataset in datasets:
+
+    for dataset in out_domain_datasets:
+    # for dataset in datasets:
         print(dataset)
-        df = pandas.read_csv("../predicts-pretrained/extended-logs/pred-"+dataset+".csv", sep="\t")
+        df = pandas.read_csv("predicts-"+sys.argv[1]+"/Logs/pred-"+dataset+".csv", sep="\t")
         number_examples = len(df)
         #df = pandas.read_csv("../predicts-BERTLarge/Logs/pred-"+dataset+".csv", sep="\t")
-        counter_to_table(process_gold_type(df), ans_type_table, i, number_examples)
+        #counter_to_table(process_gold_type(df), ans_type_table, i, number_examples)
         start = time.process_time()
-        counter_to_table(process_gold_length(df), len_table, i, number_examples)
+        #counter_to_table(process_gold_length(df), len_table, i, number_examples)
         counter_to_table(process_question_type(df), question_table, i, number_examples)
         i += 1
 
-    new_df = pandas.DataFrame.from_dict(ans_type_table, orient="index", columns=columns)
-    new_df.to_csv(sys.argv[1]+"-type.csv", sep="\t")
+    # new_df = pandas.DataFrame.from_dict(ans_type_table, orient="index", columns=columns)
+    # new_df.to_csv(sys.argv[1]+"-type.csv", sep="\t")
 
-    len_df = pandas.DataFrame.from_dict(len_table, orient="index", columns=columns)
-    len_df.to_csv(sys.argv[1]+"-len.csv", sep="\t")
+    # len_df = pandas.DataFrame.from_dict(len_table, orient="index", columns=columns)
+    # len_df.to_csv(sys.argv[1]+"-len.csv", sep="\t")
 
     len_df = pandas.DataFrame.from_dict(question_table, orient="index", columns=columns)
-    len_df.to_csv(sys.argv[1]+"-question.csv", sep="\t")
+    len_df.to_csv("data/"+sys.argv[1]+"-question1.csv", sep="\t")
